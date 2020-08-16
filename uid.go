@@ -10,11 +10,10 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"strconv"
-	"strings"
-
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/globalsign/mgo/bson"
+	"strconv"
+	"strings"
 )
 
 // UID is method to generate an virtual unique identifier for whole system

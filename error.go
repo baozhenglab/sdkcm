@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrRequestDataInvalid     = func(s string) *customError { return CustomError("ErrRequestDataInvalid", s) }
+	ErrQueryDB                = func(err error) *customError { return CustomError("ErrQueryDB", err.Error()) }
 	ErrNoPermission           = CustomError("ErrNoPermission", "you don't have permission to access")
 	ErrUsernamePasswordBlank  = CustomError("ErrUsernamePasswordBlank", "username and password cannot be blank")
 	ErrAccessTokenInvalid     = CustomError("ErrAccessTokenInvalid", "invalid access token")
@@ -39,13 +40,15 @@ var (
 	ErrDeleteUserDeviceToken  = CustomError("ErrDeleteUserDeviceToken", "cannot delete user device token")
 	ErrTokenLength            = CustomError("ErrTokenLength", "token cannot empty")
 	ErrInvalidUserDeviceToken = CustomError("ErrInvalidUserDeviceToken", "user device token invalid")
-	ErrCannotProcessImage     = CustomError("ErrCannotProcessImage", "cannot process image")
 )
 
 var (
 	// data not found sometime is not an error
 	// but we need this type to decouple from db (errNotFound mongodb and gorm)
-	ErrDataNotFound = errors.New("data not found")
+	ErrDataNotFound      = errors.New("data not found")
+	ErrDataNotFoundMongo = func(err error) bool {
+		return err.Error() == "mongo: no documents in result"
+	}
 )
 
 var (
@@ -55,6 +58,7 @@ var (
 	ErrDB = func(err error) AppError {
 		return NewAppErr(err, http.StatusBadRequest, "db error").WithCode("db_error")
 	}
+
 	ErrInvalidRequest = func(err error) AppError {
 		return NewAppErr(err, http.StatusBadRequest, "invalid request").WithCode("invalid_request")
 	}
@@ -79,6 +83,27 @@ var (
 		}
 		return NewAppErr(root, http.StatusUnauthorized, err.Error()).WithCode(err.Key())
 	}
+	ErrNotFound = func(root error, err ErrorWithKey) AppError {
+		if root == nil {
+			return NewAppErr(errors.New(err.Error()), http.StatusNotFound, err.Error()).WithCode(err.Key())
+		}
+		return NewAppErr(root, http.StatusNotFound, err.Error()).WithCode(err.Key())
+	}
+	ErrNotPermission = func(root error, err ErrorWithKey) AppError {
+		if root == nil {
+			return NewAppErr(errors.New(err.Error()), http.StatusForbidden, err.Error()).WithCode(err.Key())
+		}
+		return NewAppErr(root, http.StatusForbidden, err.Error()).WithCode(err.Key())
+	}
+	ErrServer = func(root error, err ErrorWithKey) AppError {
+		if root == nil {
+			return NewAppErr(errors.New(err.Error()), http.StatusInternalServerError, err.Error()).WithCode(err.Key())
+		}
+		return NewAppErr(root, http.StatusUnauthorized, err.Error()).WithCode(err.Key())
+	}
+	ErrUnprocessableEntity = func(err interface{}) AppError {
+		return NewAppErr(errors.New("request_error"), http.StatusUnprocessableEntity, err).WithCode("invalid_form_request")
+	}
 )
 
 type ErrorWithKey interface {
@@ -88,20 +113,20 @@ type ErrorWithKey interface {
 
 type AppError struct {
 	// We don't show root cause to the clients
-	RootCause  error  `json:"-"`
-	Code       string `json:"code"`
-	Log        string `json:"log"`
-	StatusCode int    `json:"status_code"`
-	Message    string `json:"message"`
+	RootCause  error       `json:"-"`
+	Code       string      `json:"code"`
+	Log        string      `json:"log"`
+	StatusCode int         `json:"status_code"`
+	Message    interface{} `json:"message"`
 }
 
-func NewAppErr(err error, statusCode int, msg string) AppError {
+func NewAppErr(err error, statusCode int, msg interface{}) AppError {
 	return AppError{RootCause: err, Log: err.Error(), StatusCode: statusCode, Message: msg}
 }
 
 // AppError is error
 func (ae AppError) Error() string {
-	return ae.Message
+	return ae.Message.(string)
 }
 
 func (ae AppError) RootError() error {

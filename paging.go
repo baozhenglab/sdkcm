@@ -1,10 +1,6 @@
 package sdkcm
 
-import (
-	"strings"
-
-	"github.com/btcsuite/btcutil/base58"
-)
+import "strings"
 
 type OrderBy struct {
 	Key    string
@@ -12,16 +8,15 @@ type OrderBy struct {
 }
 
 type Paging struct {
-	Cursor      *UID      `json:"cursor" form:"-"`
-	NextCursor  string    `json:"next_cursor" form:"-"`
-	CursorStr   string    `json:"-" form:"cursor"`
-	Limit       int       `json:"limit" form:"limit"`
-	Total       int       `json:"total" form:"-"`
-	Page        int       `json:"page" form:"page"`
-	HasNext     bool      `json:"has_next" form:"-"`
-	OrderBy     string    `json:"-" form:"-"`
-	OB          []OrderBy `json:"-" form:"-"`
-	CursorIsUID bool      `json:"-" form:"-"`
+	Cursor     *UID      `json:"cursor" form:"-"`
+	NextCursor string    `json:"next_cursor" form:"-"`
+	CursorStr  string    `json:"-" form:"cursor"`
+	Limit      int       `json:"limit" form:"limit"`
+	Total      int       `json:"total" form:"-"`
+	Page       int       `json:"page" form:"page"`
+	HasNext    bool      `json:"has_next" form:"-"`
+	OrderBy    string    `json:"order_by" form:"order_by"`
+	OB         []OrderBy `json:"-" form:"-"`
 }
 
 func (p *Paging) FullFill() {
@@ -30,14 +25,9 @@ func (p *Paging) FullFill() {
 	}
 
 	if p.CursorStr != "" {
-		b58s := base58.Decode(p.CursorStr)
-
-		uid, err := DecomposeUID(string(b58s))
+		uid, err := FromBase58(p.CursorStr)
 		if err == nil {
 			p.Cursor = &uid
-			p.CursorIsUID = true
-		} else {
-			p.CursorStr = string(b58s)
 		}
 	}
 
