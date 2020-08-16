@@ -1,10 +1,6 @@
 package sdkcm
 
-import (
-	"net/http"
-
-	"github.com/btcsuite/btcutil/base58"
-)
+import "net/http"
 
 // Response helpers
 var (
@@ -13,14 +9,6 @@ var (
 	}
 
 	ResponseWithPaging = func(data, param interface{}, other interface{}) Response {
-		if v, ok := other.(Paging); ok {
-			if v.NextCursor != "" {
-				if !v.CursorIsUID {
-					v.NextCursor = base58.Encode([]byte(v.NextCursor))
-				}
-			}
-			return newResponse(http.StatusOK, data, param, v)
-		}
 		return newResponse(http.StatusOK, data, param, other)
 	}
 )

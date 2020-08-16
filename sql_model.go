@@ -84,8 +84,6 @@ func (j *JSON) UnmarshalJSON(data []byte) error {
 }
 
 type Image struct {
-	ID            uint32 `json:"img_id,omitempty" bson:"img_id,omitempty"`
-	FakeID        *UID   `json:"id,omitempty" bson:"-"`
 	Url           string `json:"url" bson:"url"`
 	OriginWidth   int    `json:"org_width" bson:"org_width"`
 	OriginHeight  int    `json:"org_height" bson:"org_height"`
@@ -94,7 +92,6 @@ type Image struct {
 	CloudId       string `json:"cloud_id,omitempty" bson:"cloud_id"`
 	DominantColor string `json:"dominant_color" bson:"dominant_color"`
 	RequestId     string `json:"request_id,omitempty" bson:"-"`
-	FileSize      uint32 `json:"file_size,omitempty" bson:"-"`
 }
 
 func (i *Image) HideSomeInfo() *Image {

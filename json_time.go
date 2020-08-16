@@ -4,10 +4,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"github.com/globalsign/mgo/bson"
 	"strings"
 	"time"
-
-	"github.com/globalsign/mgo/bson"
 )
 
 var (
@@ -36,10 +35,6 @@ func (t *JSONTime) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	return nil
-}
-
-func (t *JSONTime) String() string {
-	return time.Time(*t).Format("2006-01-02 15:04:05")
 }
 
 // This method for mapping JSONTime to datetime data type in sql
