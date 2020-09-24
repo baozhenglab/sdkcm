@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/iancoleman/strcase"
@@ -14,10 +13,12 @@ import (
 )
 
 var trans ut.Translator
+var validate *validator.Validate
 
 //Load Register validator for variable Validator and load custom error
 func LoadValidator() {
 	translator := en.New()
+	validate = validator.New()
 	uni := ut.New(translator, translator)
 
 	// this is usually known or extracted from http 'Accept-Language' header
@@ -28,13 +29,11 @@ func LoadValidator() {
 	if !found {
 		log.Fatal("translator not found")
 	}
-	if validator, ok := binding.Validator.Engine().(*validator.Validate); ok {
-		registerItemValidator(validator)
-		if err := en_translations.RegisterDefaultTranslations(validator, trans); err != nil {
-			log.Fatal(err)
-		}
-		registerTranslationValidator(validator)
+	registerItemValidator(validate)
+	if err := en_translations.RegisterDefaultTranslations(validate, trans); err != nil {
+		log.Fatal(err)
 	}
+	registerTranslationValidator(validate)
 
 }
 
