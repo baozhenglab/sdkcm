@@ -15,6 +15,11 @@ import (
 var trans ut.Translator
 var validate *validator.Validate
 
+// Execute validate form
+func ExecuteValidator(form interface{}) error {
+	return validate.Struct(form)
+}
+
 //Load Register validator for variable Validator and load custom error
 func LoadValidator() {
 	translator := en.New()
