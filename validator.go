@@ -16,7 +16,7 @@ var trans ut.Translator
 var validate *validator.Validate
 
 // Execute validate form
-func Execute(form interface{}) error {
+func ExecuteValidator(form interface{}) error {
 	return validate.Struct(form)
 }
 
