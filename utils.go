@@ -5,10 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"regexp"
-	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -39,19 +36,6 @@ func Hash(password string) ([]byte, error) {
 func VerifyPassword(hashedPassword string, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
-
-//GetPageRequest return page on query param page
-func GetPageRequest(c *gin.Context) int {
-	r, _ := regexp.Compile("^[0-9]*$")
-	if c.Query("page") != "" && r.MatchString(c.Query("page")) {
-		page, _ := strconv.Atoi(c.Query("page"))
-		if page > 0 {
-			return page
-		}
-	}
-	return 1
-}
-
 func DelacreChannel(obj1, obj2 string) string {
 	if len(obj1) != len(obj2) {
 		return ""
