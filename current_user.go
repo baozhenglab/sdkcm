@@ -12,6 +12,10 @@ func (requester *Requester) EncodeString() string {
 	return string(str)
 }
 
+func (requester *Requester) GetSystemRole() string {
+	return ""
+}
+
 func DecodeRequester(requesterStr string) (*Requester,error){
 	var requester Requester
 	if err := json.Unmarshal([]byte(requesterStr),&requester); err != nil {
