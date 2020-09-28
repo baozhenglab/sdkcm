@@ -1,8 +1,23 @@
 package sdkcm
 
-type Requester interface {
-	OAuth
-	User
+import "encoding/json"
+
+type Requester struct {
+	ID uint32 `json:"id"`
+	OAuthID string `json:"oauth_id"`
+}
+
+func (requester *Requester) EncodeString() string {
+	str ,_ := json.Marshal(requester)
+	return string(str)
+}
+
+func DecodeRequester(requesterStr string) (*Requester,error){
+	var requester Requester
+	if err := json.Unmarshal([]byte(requesterStr),&requester); err != nil {
+		return nil,err
+	}
+	return &requester,nil
 }
 
 type User interface {
@@ -15,11 +30,6 @@ type OAuth interface {
 	OAuthID() string
 }
 
-type currentUser struct {
-	OAuth
-	User
-}
-
-func CurrentUser(t OAuth, u User) *currentUser {
-	return &currentUser{t, u}
+func CurrentUser(t OAuth, u User) *Requester {
+	return &Requester{u.UserID(), t.OAuthID()}
 }
