@@ -1,6 +1,9 @@
 package sdkcm
 
-import "encoding/json"
+import (
+	"encoding/base64"
+	"encoding/json"
+)
 
 type Requester struct {
 	ID uint32 `json:"id"`
@@ -9,7 +12,7 @@ type Requester struct {
 
 func (requester *Requester) EncodeString() string {
 	str ,_ := json.Marshal(requester)
-	return string(str)
+	return base64.StdEncoding.EncodeToString(str)
 }
 
 func (requester *Requester) GetSystemRole() string {
@@ -18,7 +21,8 @@ func (requester *Requester) GetSystemRole() string {
 
 func DecodeRequester(requesterStr string) (*Requester,error){
 	var requester Requester
-	if err := json.Unmarshal([]byte(requesterStr),&requester); err != nil {
+	base,_ := base64.StdEncoding.DecodeString(requesterStr)
+	if err := json.Unmarshal(base,&requester); err != nil {
 		return nil,err
 	}
 	return &requester,nil
