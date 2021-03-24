@@ -1,6 +1,7 @@
 package sdkcm
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"reflect"
 	"regexp"
@@ -15,13 +16,20 @@ import (
 var trans ut.Translator
 var validate *validator.Validate
 
+type RegisterValidate struct {
+	Name string
+	Validate  func(fl validator.FieldLevel) bool
+	RegisterTranslation func(ut ut.Translator) error
+	Translation func(ut ut.Translator, fe validator.FieldError) string
+}
+
 // Execute validate form
 func ExecuteValidator(form interface{}) error {
 	return validate.Struct(form)
 }
 
 //Load Register validator for variable Validator and load custom error
-func LoadValidator() {
+func LoadValidator(registers ...RegisterValidate) {
 	translator := en.New()
 	validate = validator.New()
 	uni := ut.New(translator, translator)
@@ -34,11 +42,11 @@ func LoadValidator() {
 	if !found {
 		log.Fatal("translator not found")
 	}
-	registerItemValidator(validate)
+	registerItemValidator(validate,registers...)
 	if err := en_translations.RegisterDefaultTranslations(validate, trans); err != nil {
 		log.Fatal(err)
 	}
-	registerTranslationValidator(validate)
+	registerTranslationValidator(validate,registers...)
 
 }
 
@@ -57,7 +65,7 @@ func GetErrors(err validator.ValidationErrors) (errors map[string][]string) {
 	return errors
 }
 
-func registerItemValidator(Validator *validator.Validate) {
+func registerItemValidator(Validator *validator.Validate,registers ...RegisterValidate) {
 	// Validator.RegisterValidation("umail", func(fl validator.FieldLevel) bool {
 	// 	email := fl.Field().String()
 	// 	if email == "" {
@@ -71,6 +79,9 @@ func registerItemValidator(Validator *validator.Validate) {
 	// 	return false
 
 	// })
+	for _,item := range registers {
+		Validator.RegisterValidation(item.Name,item.Validate)
+	}
 
 	Validator.RegisterValidation("isbase64", func(fl validator.FieldLevel) bool {
 		base64 := Base64(fl.Field().String())
@@ -182,9 +193,20 @@ func registerItemValidator(Validator *validator.Validate) {
 		r, _ := regexp.Compile(`^(.*[A-Z].*)(.*[a-z].*)(.*\d.*)`)
 		return r.MatchString(value)
 	})
+	Validator.RegisterValidation("mongoid",func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		if value == "" {
+			return false
+		}
+		_,err:= primitive.ObjectIDFromHex(value)
+		return err == nil
+	})
 }
 
-func registerTranslationValidator(Validator *validator.Validate) {
+func registerTranslationValidator(Validator *validator.Validate,registers ...RegisterValidate) {
+	for _,item := range registers {
+		Validator.RegisterTranslation(item.Name,trans,item.RegisterTranslation,item.Translation)
+	}
 	Validator.RegisterTranslation("umail", trans, func(ut ut.Translator) error {
 		return ut.Add("umail", "{0} is already exists", true) // see universal-translator for details
 	}, func(ut ut.Translator, fe validator.FieldError) string {
@@ -252,4 +274,11 @@ func registerTranslationValidator(Validator *validator.Validate) {
 		t, _ := ut.T("mine", fe.Field(), fe.Param())
 		return t
 	})
+	Validator.RegisterTranslation("mongoid", trans, func(ut ut.Translator) error {
+		return ut.Add("mongoid", "{0} required is mongo id", true) // see universal-translator for details
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("mongoid", fe.Field(), fe.Param())
+		return t
+	})
+
 }
