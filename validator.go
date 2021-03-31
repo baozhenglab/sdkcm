@@ -5,6 +5,7 @@ import (
 	"log"
 	"reflect"
 	"regexp"
+	"time"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -201,6 +202,14 @@ func registerItemValidator(Validator *validator.Validate,registers ...RegisterVa
 		_,err:= primitive.ObjectIDFromHex(value)
 		return err == nil
 	})
+	Validator.RegisterValidation("datestring", func(fl validator.FieldLevel) bool {
+		value := fl.Field().String()
+		if value == ""{
+			return true
+		}
+		_,err := time.Parse(time.RFC3339,value)
+		return err == nil
+	})
 }
 
 func registerTranslationValidator(Validator *validator.Validate,registers ...RegisterValidate) {
@@ -278,6 +287,12 @@ func registerTranslationValidator(Validator *validator.Validate,registers ...Reg
 		return ut.Add("mongoid", "{0} required is mongo id", true) // see universal-translator for details
 	}, func(ut ut.Translator, fe validator.FieldError) string {
 		t, _ := ut.T("mongoid", fe.Field(), fe.Param())
+		return t
+	})
+	Validator.RegisterTranslation("datestring", trans, func(ut ut.Translator) error {
+		return ut.Add("datestring", "{0} required is date type string", true) // see universal-translator for details
+	}, func(ut ut.Translator, fe validator.FieldError) string {
+		t, _ := ut.T("datestring", fe.Field(), fe.Param())
 		return t
 	})
 
